@@ -1,0 +1,15 @@
+# OS
+.DS_Store
+
+# IDEs
+.idea/
+.vscode/
+
+# Frontend
+node_modules/
+dist/
+
+# Backend
+target/
+build/
+
