@@ -13,3 +13,6 @@ dist/
 target/
 build/
 
+# environment vars
+.env
+
