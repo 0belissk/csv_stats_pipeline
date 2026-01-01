@@ -15,4 +15,5 @@ build/
 
 # environment vars
 .env
+**/.env
 
