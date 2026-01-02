@@ -1,12 +1,14 @@
 import { Component, signal } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { LoginComponent } from './login/login';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
-  templateUrl: './app.html',
-  styleUrl: './app.css'
+  standalone: true,
+  imports: [LoginComponent],
+  template: `<app-login></app-login>`
 })
-export class App {
-  protected readonly title = signal('frontend');
+export class AppComponent {
+  constructor() {
+    console.log('APP COMPONENT LOADED');
+  }
 }

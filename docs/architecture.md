@@ -30,3 +30,13 @@
 - Data processing pipeline
 - AWS infrastructure provisioning
 
+## Authentication & Security (Sprint 2)
+
+- Stateless JWT-based authentication
+- Login endpoint (`/auth/login`) issues signed JWTs
+- JWT validated on every protected request
+- No server-side sessions
+- User identity reconstructed per request
+- Angular client uses HTTP interceptor to attach JWT
+- CORS configured via Spring Security to support browser clients
+
