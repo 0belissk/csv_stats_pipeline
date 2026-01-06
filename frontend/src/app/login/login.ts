@@ -24,7 +24,7 @@ import { AuthService } from '../auth';
 
   `
 })
-export class LoginComponent {
+export class Login {
   email = '';
   password = '';
 

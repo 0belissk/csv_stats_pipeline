@@ -1,13 +1,16 @@
 import { Component, signal } from '@angular/core';
-import { LoginComponent } from './login/login';
+import { Login } from './login/login';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [LoginComponent],
-  template: `<app-login></app-login>`
+  imports: [Login],
+  template: `
+    <h1>Hello, frontend</h1>
+    <app-login></app-login>
+  `
 })
-export class AppComponent {
+export class App {
   constructor() {
     console.log('APP COMPONENT LOADED');
   }
