@@ -49,7 +49,9 @@ public class CsvUpload {
         this.filename = filename;
         this.sizeBytes = sizeBytes;
         this.contentType = contentType;
-        this.s3Key = s3Key;
+        this.s3Key = (s3Key == null || s3Key.isBlank())
+                ? "uploads/" + userEmail + "/" + UUID.randomUUID() + "/" + filename
+                : s3Key;
     }
 
     @PrePersist
@@ -57,9 +59,6 @@ public class CsvUpload {
         Instant now = Instant.now();
         this.createdAt = now;
         this.updatedAt = now;
-        if (this.s3Key == null || this.s3Key.isBlank()) {
-            this.s3Key = "uploads/" + userEmail + "/" + UUID.randomUUID() + "/" + filename;
-        }
     }
 
     @PreUpdate
