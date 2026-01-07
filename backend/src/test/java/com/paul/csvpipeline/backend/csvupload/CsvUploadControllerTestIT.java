@@ -6,6 +6,7 @@ import com.paul.csvpipeline.backend.LocalStackS3TestContainer;
 import com.paul.csvpipeline.backend.PostgresTestContainer;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -20,7 +21,6 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
 import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
@@ -32,6 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Import({PostgresTestContainer.class, LocalStackS3TestContainer.class})
 @ActiveProfiles("test")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class CsvUploadControllerIT {
 
     @Autowired
@@ -46,8 +47,7 @@ class CsvUploadControllerIT {
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     @BeforeAll
-    static void ensureBucket(@Autowired S3Client s3Client,
-                             @Value("${csvpipeline.s3.bucket}") String bucket) {
+    void ensureBucket() {
         s3Client.createBucket(CreateBucketRequest.builder().bucket(bucket).build());
     }
 

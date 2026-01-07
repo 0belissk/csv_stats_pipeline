@@ -1,7 +1,7 @@
-package com.paul.csvpipeline. backend;
+package com.paul.csvpipeline.backend;
 
 import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework. test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.localstack.LocalStackContainer;
 import org.testcontainers.utility.DockerImageName;
@@ -20,8 +20,8 @@ public class LocalStackS3TestContainer {
     @DynamicPropertySource
     static void registerProps(DynamicPropertyRegistry registry) {
         registry.add("csvpipeline.aws.endpoint",
-                () -> LOCALSTACK.getEndpointOverride(LocalStackContainer.Service. S3).toString());
-        registry.add("csvpipeline. aws.region", LOCALSTACK::getRegion);
+                () -> LOCALSTACK.getEndpointOverride(LocalStackContainer.Service.S3).toString());
+        registry.add("csvpipeline.aws.region", LOCALSTACK::getRegion);
         registry.add("csvpipeline.s3.bucket", () -> "csvpipeline-test-uploads");
     }
 }
