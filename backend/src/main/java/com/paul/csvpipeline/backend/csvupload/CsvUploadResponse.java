@@ -1,5 +1,7 @@
 package com.paul.csvpipeline.backend.csvupload;
 
+import com.paul.csvpipeline.backend.csvupload.entity.CsvUpload;
+
 import java.time.Instant;
 
 public record CsvUploadResponse(

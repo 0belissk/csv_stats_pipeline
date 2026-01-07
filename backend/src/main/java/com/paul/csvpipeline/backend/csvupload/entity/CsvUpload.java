@@ -1,12 +1,18 @@
-package com.paul.csvpipeline.backend.csvupload;
+package com.paul.csvpipeline.backend.csvupload.entity;
 
+import com.paul.csvpipeline.backend.csvupload.CsvUploadStatus;
 import jakarta.persistence.*;
 
 import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "csv_uploads")
+@Table(
+        name = "csv_uploads",
+        indexes = {
+                @Index(name = "idx_csv_uploads_user_email_created_at", columnList = "userEmail,createdAt DESC")
+        }
+)
 public class CsvUpload {
 
     @Id
@@ -88,6 +94,10 @@ public class CsvUpload {
 
     public String getS3Key() {
         return s3Key;
+    }
+
+    public void setS3Key(String s3Key) {
+        this.s3Key = s3Key;
     }
 
     public long getSizeBytes() {
