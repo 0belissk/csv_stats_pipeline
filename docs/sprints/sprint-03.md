@@ -20,7 +20,7 @@ The following user stories are selected from **Epic 2 (CSV Upload & Storage)** a
 **So that** I can have my data processed and analyzed.
 
 **Tasks:**
-- Create `CsvUpload` entity to track upload metadata (userId, filename, status, S3 key, timestamps)
+- Create `CsvUpload` entity to track upload metadata (userEmail, filename, status, S3 key, timestamps)
 - Create `CsvUploadRepository`
 - Create `CsvUploadService` to handle upload logic
 - Create `CsvUploadController` with POST `/api/uploads` endpoint
@@ -76,8 +76,8 @@ The following user stories are selected from **Epic 2 (CSV Upload & Storage)** a
 
 #### Story 2.1: CSV Upload Endpoint
 - [ ] Authenticated users can POST a CSV file to `/api/uploads`
-- [ ] File is stored in S3 with a unique key pattern: `uploads/{userId}/{uploadId}/{filename}`
-- [ ] Upload metadata is saved to PostgreSQL (id, userId, filename, s3Key, status, createdAt)
+- [ ] File is stored in S3 with a unique key pattern: `uploads/{userEmail}/{uploadId}/{filename}`
+- [ ] Upload metadata is saved to PostgreSQL (id, userEmail, filename, s3Key, status, createdAt)
 - [ ] Response includes uploadId and status `PENDING`
 - [ ] Only CSV files are accepted (content-type validation)
 - [ ] Unauthenticated requests return 401
@@ -155,7 +155,7 @@ CsvUploadController
 ```sql
 CREATE TABLE csv_uploads (
     id BIGSERIAL PRIMARY KEY,
-    user_id BIGINT NOT NULL REFERENCES users(id),
+    user_email VARCHAR(255) NOT NULL,
     filename VARCHAR(255) NOT NULL,
     s3_key VARCHAR(512) NOT NULL,
     status VARCHAR(50) NOT NULL DEFAULT 'PENDING',

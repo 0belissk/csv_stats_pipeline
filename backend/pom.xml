@@ -150,6 +150,12 @@
 			<artifactId>localstack</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>software.amazon.awssdk</groupId>
+			<artifactId>auth</artifactId>
+		</dependency>
+
+
 	</dependencies>
 
 	<build>

@@ -17,7 +17,7 @@ The system needs to handle:
 
 ## Decision
 - Use an **event-driven architecture** with AWS S3, Lambda, and Step Functions
-- Store uploaded CSV files in S3 with user-scoped keys: `uploads/{userId}/{uploadId}/{filename}`
+- Store uploaded CSV files in S3 with user-scoped keys: `uploads/{userEmail}/{uploadId}/{filename}`
 - Trigger Lambda function automatically on S3 upload events
 - Use Step Functions to orchestrate the multi-step processing workflow
 - Track upload status in PostgreSQL: `PENDING → VALIDATING → VALIDATED / VALIDATION_FAILED`

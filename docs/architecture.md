@@ -45,10 +45,12 @@
 ### Overview
 Sprint 3 introduces the core CSV ingestion capability using an event-driven architecture. Users upload CSV files via the Angular UI, files are stored in S3, and AWS Lambda + Step Functions process and validate the data.
 
+
+
 ### Components
 
 #### Backend (Spring Boot)
-- `CsvUpload` entity: tracks upload metadata (userId, filename, status, S3 key)
+- `CsvUpload` entity: tracks upload metadata (userEmail, filename, status, S3 key)
 - `CsvUploadController`: REST API for upload and status queries
 - `CsvUploadService`: handles upload logic and S3 integration
 - `S3Service`: abstracts AWS S3 operations
@@ -86,7 +88,7 @@ User uploads CSV
 
 ### Security Considerations
 - All upload endpoints require JWT authentication
-- Files are stored with user-scoped S3 keys: `uploads/{userId}/{uploadId}/{filename}`
+- Files are stored with user-scoped S3 keys: `uploads/{userEmail}/{uploadId}/{filename}`
 - Users can only access their own uploads
 
 
