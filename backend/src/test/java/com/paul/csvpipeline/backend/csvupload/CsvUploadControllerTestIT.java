@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.core.env.Environment;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
@@ -46,9 +47,22 @@ class CsvUploadControllerIT {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
+    @Autowired
+    private Environment env;
+
+    @Value("${csvpipeline.aws.endpoint:}")
+    private String endpoint;
+
     @BeforeAll
     void ensureBucket() {
-        s3Client.createBucket(CreateBucketRequest.builder().bucket(bucket).build());
+        org.awaitility.Awaitility.await()
+                .atMost(java.time.Duration.ofSeconds(60))
+                .pollInterval(java.time.Duration.ofSeconds(1))
+                .ignoreExceptions()
+                .untilAsserted(() -> {
+                    s3Client.createBucket(CreateBucketRequest.builder().bucket(bucket).build());
+                    s3Client.headBucket(b -> b.bucket(bucket));
+                });
     }
 
     @Test
