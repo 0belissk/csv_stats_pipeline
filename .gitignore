@@ -23,3 +23,10 @@ build/
 *.tfstate
 *.tfstate.*
 *.tfplan
+
+# Terraform
+terraform/.terraform/
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfplan
