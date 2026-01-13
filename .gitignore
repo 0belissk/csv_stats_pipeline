@@ -17,3 +17,9 @@ build/
 .env
 **/.env
 
+
+# Terraform
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfplan
