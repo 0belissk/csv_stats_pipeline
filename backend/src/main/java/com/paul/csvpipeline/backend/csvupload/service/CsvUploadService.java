@@ -1,6 +1,6 @@
 package com.paul.csvpipeline.backend.csvupload.service;
 
-import com.paul.csvpipeline.backend.csvupload.CsvUploadRepository;
+import com.paul.csvpipeline.backend.csvupload.repository.CsvUploadRepository;
 import com.paul.csvpipeline.backend.csvupload.CsvUploadResponse;
 import com.paul.csvpipeline.backend.csvupload.UploadMetrics;
 import com.paul.csvpipeline.backend.csvupload.entity.CsvUpload;

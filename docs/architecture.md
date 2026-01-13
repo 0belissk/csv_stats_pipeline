@@ -40,17 +40,17 @@
 - Angular client uses HTTP interceptor to attach JWT
 - CORS configured via Spring Security to support browser clients
 
-## CSV Upload & Validation Pipeline (Planned – Sprint 3)
+## CSV Upload & Validation Pipeline (Sprint 3 Increment)
 
 ### Overview
-Sprint 3 introduces the core CSV ingestion capability using an event-driven architecture. Users upload CSV files via the Angular UI, files are stored in S3, and AWS Lambda + Step Functions process and validate the data.
+Sprint 3 delivers the core CSV ingestion capability using an event-driven architecture. Users upload CSV files via the Angular UI, files are stored in S3, and an AWS Lambda function validates schema + data types before downstream processing (Step Functions orchestration comes next).
 
 
 
 ### Components
 
 #### Backend (Spring Boot)
-- `CsvUpload` entity: tracks upload metadata (userEmail, filename, status, S3 key)
+- `CsvUpload` entity: tracks upload metadata (userEmail, filename, status, S3 key, validation errors)
 - `CsvUploadController`: REST API for upload and status queries
 - `CsvUploadService`: handles upload logic and S3 integration
 - `S3Service`: abstracts AWS S3 operations
@@ -59,8 +59,8 @@ Sprint 3 introduces the core CSV ingestion capability using an event-driven arch
 | Service | Purpose |
 |---------|---------|
 | S3 | Store raw CSV uploads |
-| Lambda | Validate CSV schema and data |
-| Step Functions | Orchestrate processing workflow |
+| Lambda | Validate CSV schema/data, update DB status |
+| Step Functions | Orchestrate processing workflow (future increment) |
 
 #### Data Flow
 ```
@@ -77,14 +77,24 @@ User uploads CSV
 - `PENDING`: File uploaded, awaiting processing
 - `VALIDATING`: Lambda is parsing and validating
 - `VALIDATED`: Schema validation passed
-- `VALIDATION_FAILED`: Schema or data type errors detected
+- `VALIDATION_FAILED`: Schema or data type errors detected; JSON payload persisted to `csv_uploads.error_message`
 
 ### API Endpoints (Sprint 3)
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | POST | `/api/uploads` | Upload a CSV file |
 | GET | `/api/uploads` | List user's uploads |
-| GET | `/api/uploads/{id}` | Get upload status |
+| GET | `/api/uploads/{id}` | Get upload status (status/error populated by Lambda)
+
+### CSV Schema (Sprint 3 Validator)
+- Header order: `id`, `name`, `email`, `amount` (case-insensitive match)
+- `id`: integer, `name`: non-empty string, `email`: RFC-like regex, `amount`: decimal
+- Every row validated column-by-column; errors capture row number, column, and reason
+
+### Lambda collaboration
+- Lambda derives uploadId from S3 keys: `uploads/{userEmail}/{uploadId}/{filename}`
+- Status is set to `VALIDATING` when parse begins, `VALIDATED` on success, `VALIDATION_FAILED` with JSON error array otherwise
+- Updates happen via direct JDBC access to PostgreSQL using credentials stored in Lambda environment variables
 
 ### Security Considerations
 - All upload endpoints require JWT authentication

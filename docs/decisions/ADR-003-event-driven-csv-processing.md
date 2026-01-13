@@ -58,3 +58,6 @@ User uploads CSV → Backend stores in S3 → S3 triggers Lambda
 - EventBridge integration for `ImportCompleted/Failed` events is planned for Sprint 4/6
 - Email notifications via SES will be added in Sprint 6
 - LocalStack will be used for local development and CI testing of AWS components
+- Lambda reads `DB_URL`, `DB_USERNAME`, and `DB_PASSWORD` from environment variables and updates `csv_uploads.status` directly (`VALIDATING` → `VALIDATED` / `VALIDATION_FAILED`).
+- S3 notifications are filtered to the `uploads/` prefix (and `.csv` suffix) to avoid noisy invocations.
+- Terraform stack (in `terraform/`) provisions the S3 bucket, IAM role/policy, CloudWatch log group, Lambda function, and S3→Lambda wiring; Terraform consumes a pre-built JAR artifact and never compiles code.

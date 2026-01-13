@@ -37,7 +37,7 @@ The following user stories are selected from **Epic 2 (CSV Upload & Storage)** a
 - Add GET `/api/uploads` endpoint to list user's uploads
 - Status values: `PENDING`, `VALIDATING`, `VALIDATED`, `VALIDATION_FAILED`
 
-#### Story 3.1: Lambda CSV Parser & Schema Validation
+#### Story 3.1: Lambda CSV Parser & Schema Validation (Completed)
 **As a** system,  
 **I want to** automatically validate uploaded CSV files against a defined schema,  
 **So that** only valid data proceeds to the next processing stage.
@@ -89,13 +89,13 @@ The following user stories are selected from **Epic 2 (CSV Upload & Storage)** a
 - [ ] Response includes: id, filename, status, createdAt, updatedAt
 
 #### Story 3.1: Lambda CSV Parser & Schema Validation
-- [ ] Lambda triggers automatically when a file is uploaded to the S3 bucket
-- [ ] CSV is parsed and headers are validated against expected schema
-- [ ] Data types in each column are validated (e.g., numeric, date, string)
-- [ ] Upload status is updated to `VALIDATING` when processing starts
-- [ ] Status is updated to `VALIDATED` on success
-- [ ] Status is updated to `VALIDATION_FAILED` on schema/type errors
-- [ ] Validation errors are captured (row number, column, error type)
+- [x] Lambda triggers automatically when a file is uploaded to the S3 bucket (AWS Lambda → S3 event source backed by the handler in `backend/src/main/java/com/paul/csvpipeline/backend/lambda`)
+- [x] CSV is parsed and headers are validated against expected schema
+- [x] Data types in each column are validated (integer, email, decimal, date)
+- [x] Upload status is updated to `VALIDATING` when processing starts
+- [x] Status is updated to `VALIDATED` on success
+- [x] Status is updated to `VALIDATION_FAILED` on schema/type errors
+- [x] Validation errors are captured (row number, column, error type) and persisted for UI consumption
 
 #### Story 3.2: Step Functions Orchestration
 - [ ] Step Functions state machine is created and deployed

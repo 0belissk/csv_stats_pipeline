@@ -1,4 +1,4 @@
-package com.paul.csvpipeline.backend.csvupload;
+package com.paul.csvpipeline.backend.csvupload.repository;
 
 import com.paul.csvpipeline.backend.csvupload.entity.CsvUpload;
 import org.springframework.data.jpa.repository.JpaRepository;
