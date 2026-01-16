@@ -1,9 +1,9 @@
-package com.paul.csvpipeline.backend.controller;
+package com.paul.csvpipeline.backend.auth.controller;
 
-import com.paul.csvpipeline.backend.dto.AuthResponse;
-import com.paul.csvpipeline.backend.dto.LoginRequest;
-import com.paul.csvpipeline.backend.dto.RegisterRequest;
-import com.paul.csvpipeline.backend.service.AuthService;
+import com.paul.csvpipeline.backend.auth.dto.AuthResponse;
+import com.paul.csvpipeline.backend.auth.dto.LoginRequest;
+import com.paul.csvpipeline.backend.auth.dto.RegisterRequest;
+import com.paul.csvpipeline.backend.auth.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;

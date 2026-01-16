@@ -1,4 +1,4 @@
-package com.paul.csvpipeline.backend.dto;
+package com.paul.csvpipeline.backend.auth.dto;
 
 public record AuthResponse(
         Long userId,

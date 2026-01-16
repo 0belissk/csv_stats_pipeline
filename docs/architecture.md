@@ -59,8 +59,8 @@ Sprint 3 delivers the core CSV ingestion capability using an event-driven archit
 | Service | Purpose |
 |---------|---------|
 | S3 | Store raw CSV uploads |
-| Lambda | Validate CSV schema/data, update DB status |
-| Step Functions | Orchestrate processing workflow (future increment) |
+| Lambda | Validate CSV schema/data, update DB status, launch Step Functions |
+| Step Functions | Orchestrate processing workflow (validate now, transform/persist next sprint) |
 
 #### Data Flow
 ```
@@ -75,9 +75,17 @@ User uploads CSV
 
 ### Upload Status Lifecycle
 - `PENDING`: File uploaded, awaiting processing
-- `VALIDATING`: Lambda is parsing and validating
-- `VALIDATED`: Schema validation passed
-- `VALIDATION_FAILED`: Schema or data type errors detected; JSON payload persisted to `csv_uploads.error_message`
+- `VALIDATING`: `StepFunctionOrchestratorLambda` marks the record after S3 notifications arrive
+- `VALIDATED`: Schema validation passed; `UploadStatusLambda` sets the flag after the success branch
+- `VALIDATION_FAILED`: Schema/data errors detected or unexpected Lambda failure; serialized `ValidationError` payload persisted by `UploadStatusLambda`
+
+### Step Functions Orchestration (Sprint 3.2)
+- `StepFunctionOrchestratorLambda` (S3-triggered) updates status to `VALIDATING` and starts the `csv-processing` Step Functions state machine with `{uploadId, bucket, key}`.
+- The state machine definition (`terraform/state_machine/csv_processing.asl.json`) uses `ValidateCsv → PersistPlaceholder/Failure` to coordinate the Lambda steps; infrastructure is provisioned through `aws_sfn_state_machine.csv_processing`.
+- `ValidateCsv` synchronously invokes `CsvValidationLambda` with retries for transient errors and stores the response (`valid`, `errors`) under `$.validation` for downstream decisions.
+- Success path hits the placeholder `PersistPlaceholder` (reserved for Sprint 4 transformation) and then invokes `UploadStatusLambda` to mark `VALIDATED`.
+- Failure path routes either validation issues (`MarkValidationFailed`) or unexpected exceptions (`MarkSystemFailure`) to `UploadStatusLambda`, ensuring descriptive errors reach the `csv_uploads.error_message` column.
+- CloudWatch log group `/aws/states/${project}-csv-processing` captures execution traces so every step transition is auditable.
 
 ### API Endpoints (Sprint 3)
 | Method | Endpoint | Description |
@@ -92,9 +100,9 @@ User uploads CSV
 - Every row validated column-by-column; errors capture row number, column, and reason
 
 ### Lambda collaboration
-- Lambda derives uploadId from S3 keys: `uploads/{userEmail}/{uploadId}/{filename}`
-- Status is set to `VALIDATING` when parse begins, `VALIDATED` on success, `VALIDATION_FAILED` with JSON error array otherwise
-- Updates happen via direct JDBC access to PostgreSQL using credentials stored in Lambda environment variables
+- `StepFunctionOrchestratorLambda` derives `uploadId` from S3 keys (`uploads/{userEmail}/{uploadId}/{filename}`) and starts the state machine.
+- `CsvValidationLambda` performs the schema/data checks and returns `ValidationError` details without touching the database.
+- `UploadStatusLambda` owns status persistence (`VALIDATING`, `VALIDATED`, `VALIDATION_FAILED`) using the shared JDBC credentials exposed via environment variables.
 
 ### Security Considerations
 - All upload endpoints require JWT authentication

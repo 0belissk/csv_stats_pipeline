@@ -1,4 +1,4 @@
-package com.paul.csvpipeline.backend.domain;
+package com.paul.csvpipeline.backend.user.domain;
 
 import jakarta.persistence.*;
 

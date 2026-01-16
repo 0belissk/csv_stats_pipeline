@@ -1,9 +1,9 @@
-package com.paul.csvpipeline.backend.service;
+package com.paul.csvpipeline.backend.auth.service;
 
-import com.paul.csvpipeline.backend.domain.User;
-import com.paul.csvpipeline.backend.dto.AuthResponse;
-import com.paul.csvpipeline.backend.repository.UserRepository;
-import com.paul.csvpipeline.backend.security.JwtService;
+import com.paul.csvpipeline.backend.user.domain.User;
+import com.paul.csvpipeline.backend.auth.dto.AuthResponse;
+import com.paul.csvpipeline.backend.user.repository.UserRepository;
+import com.paul.csvpipeline.backend.auth.security.JwtService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 

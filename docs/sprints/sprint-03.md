@@ -98,11 +98,11 @@ The following user stories are selected from **Epic 2 (CSV Upload & Storage)** a
 - [x] Validation errors are captured (row number, column, error type) and persisted for UI consumption
 
 #### Story 3.2: Step Functions Orchestration
-- [ ] Step Functions state machine is created and deployed
-- [ ] Validation Lambda is invoked as the first step
-- [ ] Success path transitions to next state (placeholder for Sprint 4)
-- [ ] Failure path handles validation errors gracefully
-- [ ] State machine execution is traceable and logged
+- [x] Step Functions state machine is created and deployed (`aws_sfn_state_machine.csv_processing` + `terraform/state_machine/csv_processing.asl.json`)
+- [x] Validation Lambda is invoked as the first step (`ValidateCsv` task calls `CsvValidationLambda` through the `lambda:invoke` integration)
+- [x] Success path transitions to next state (placeholder for Sprint 4) via the `PersistPlaceholder` pass state
+- [x] Failure path handles validation errors gracefully via the `MarkValidationFailed` and `MarkSystemFailure` branches that call `UploadStatusLambda`
+- [x] State machine execution is traceable and logged (CloudWatch log group `/aws/states/${project}-csv-processing` with `ALL` logging)
 
 #### Story 2.3: Angular Upload UI
 - [ ] Upload page is accessible from the dashboard

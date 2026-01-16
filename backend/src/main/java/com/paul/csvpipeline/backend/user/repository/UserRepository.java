@@ -1,6 +1,6 @@
-package com.paul.csvpipeline.backend.repository;
+package com.paul.csvpipeline.backend.user.repository;
 
-import com.paul.csvpipeline.backend.domain.User;
+import com.paul.csvpipeline.backend.user.domain.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

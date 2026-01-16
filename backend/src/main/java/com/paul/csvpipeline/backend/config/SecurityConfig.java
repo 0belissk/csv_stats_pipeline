@@ -1,6 +1,6 @@
 package com.paul.csvpipeline.backend.config;
 
-import com.paul.csvpipeline.backend.security.JwtAuthenticationFilter;
+import com.paul.csvpipeline.backend.auth.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;

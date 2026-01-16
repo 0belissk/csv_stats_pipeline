@@ -1,4 +1,4 @@
-package com.paul.csvpipeline.backend.security;
+package com.paul.csvpipeline.backend.auth.security;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;

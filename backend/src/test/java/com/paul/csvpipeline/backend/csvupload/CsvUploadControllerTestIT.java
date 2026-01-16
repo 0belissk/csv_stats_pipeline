@@ -2,9 +2,14 @@ package com.paul.csvpipeline.backend.csvupload;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.paul.csvpipeline.backend.LocalStackS3TestContainer;
-import com.paul.csvpipeline.backend.PostgresTestContainer;
+import com.paul.csvpipeline.backend.IntegrationTestBase;
+import com.paul.csvpipeline.backend.IntegrationTestBase.LocalStackS3ClientConfig;
+import com.paul.csvpipeline.backend.csvupload.repository.CsvUploadRepository;
+
+import java.util.stream.Collectors;
+
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,15 +17,19 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
-import org.springframework.core.env.Environment;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.mock.web.MockMultipartFile;
+import org.testcontainers.junit.jupiter.Testcontainers;
+
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
+import software.amazon.awssdk.services.s3.model.Delete;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.DeleteObjectsRequest;
 import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
+import software.amazon.awssdk.services.s3.model.ObjectIdentifier;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -28,13 +37,15 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+
 @SpringBootTest
 @AutoConfigureMockMvc
-@Import({PostgresTestContainer.class, LocalStackS3TestContainer.class})
+@Import(LocalStackS3ClientConfig.class)
 @ActiveProfiles("test")
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class CsvUploadControllerIT {
+class CsvUploadControllerIT extends IntegrationTestBase {
+
+    private static final ObjectMapper MAPPER = new ObjectMapper();
 
     @Autowired
     private MockMvc mockMvc;
@@ -42,16 +53,11 @@ class CsvUploadControllerIT {
     @Autowired
     private S3Client s3Client;
 
+    @Autowired
+    private CsvUploadRepository uploadRepository;
+
     @Value("${csvpipeline.s3.bucket}")
     private String bucket;
-
-    private static final ObjectMapper MAPPER = new ObjectMapper();
-
-    @Autowired
-    private Environment env;
-
-    @Value("${csvpipeline.aws.endpoint:}")
-    private String endpoint;
 
     @BeforeAll
     void ensureBucket() {
@@ -63,6 +69,12 @@ class CsvUploadControllerIT {
                     s3Client.createBucket(CreateBucketRequest.builder().bucket(bucket).build());
                     s3Client.headBucket(b -> b.bucket(bucket));
                 });
+    }
+
+    @BeforeEach
+    void cleanState() {
+        uploadRepository.deleteAll();
+        deleteAllObjectsInBucket();
     }
 
     @Test
@@ -116,5 +128,26 @@ class CsvUploadControllerIT {
 
         mockMvc.perform(multipart("/api/uploads").file(file))
                 .andExpect(status().isUnauthorized());
+    }
+
+    private void deleteAllObjectsInBucket() {
+        var listed = s3Client.listObjectsV2(b -> b.bucket(bucket));
+        if (listed.contents() == null || listed.contents().isEmpty()) {
+            return;
+        }
+
+        var ids = listed.contents().stream()
+                .map(o -> ObjectIdentifier.builder().key(o.key()).build())
+                .collect(Collectors.toList());
+
+        if (ids.size() == 1) {
+            s3Client.deleteObject(DeleteObjectRequest.builder().bucket(bucket).key(ids.get(0).key()).build());
+            return;
+        }
+
+        s3Client.deleteObjects(DeleteObjectsRequest.builder()
+                .bucket(bucket)
+                .delete(Delete.builder().objects(ids).build())
+                .build());
     }
 }

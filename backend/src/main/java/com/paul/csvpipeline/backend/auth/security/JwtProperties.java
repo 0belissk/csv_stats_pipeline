@@ -1,4 +1,4 @@
-package com.paul.csvpipeline.backend.security;
+package com.paul.csvpipeline.backend.auth.security;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;

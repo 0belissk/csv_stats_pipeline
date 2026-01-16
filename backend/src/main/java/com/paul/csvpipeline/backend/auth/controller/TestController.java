@@ -1,4 +1,4 @@
-package com.paul.csvpipeline.backend.controller;
+package com.paul.csvpipeline.backend.auth.controller;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
