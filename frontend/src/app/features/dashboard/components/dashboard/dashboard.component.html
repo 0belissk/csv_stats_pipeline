@@ -1,0 +1,21 @@
+<div class="dashboard-layout">
+  <header class="dashboard-header">
+    <div>
+      <p class="eyebrow">CSV Stats Pipeline</p>
+      <h1>Dashboard</h1>
+      <p class="subhead">Upload CSV files and track their processing status.</p>
+    </div>
+    <div class="user-section">
+      <span *ngIf="userEmail() as email" class="user-email">Signed in as {{ email }}</span>
+      <button type="button" (click)="logout()">Logout</button>
+    </div>
+  </header>
+
+  <nav class="dashboard-nav">
+    <a routerLink="uploads" routerLinkActive="active" ariaCurrentWhenActive="page">Uploads</a>
+  </nav>
+
+  <section class="dashboard-content">
+    <router-outlet></router-outlet>
+  </section>
+</div>

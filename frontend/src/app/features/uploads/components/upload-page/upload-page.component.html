@@ -1,0 +1,63 @@
+<div class="upload-grid">
+  <section class="card">
+    <header>
+      <h2>Upload CSV</h2>
+      <p>Select a CSV file to kick off the validation pipeline.</p>
+    </header>
+
+    <label class="file-picker">
+      <input #fileInput type="file" accept=".csv,text/csv" (change)="onFileSelected($event)" />
+      <span>{{ selectedFile?.name || 'Choose a CSV file' }}</span>
+    </label>
+
+    <button type="button" (click)="upload()" [disabled]="!selectedFile || uploadInFlight">
+      {{ uploadInFlight ? 'Uploading...' : 'Upload file' }}
+    </button>
+
+    <div class="progress" *ngIf="uploadProgress() !== null">
+      <div class="bar" [style.width.%]="uploadProgress()"></div>
+      <span>{{ uploadProgress() }}%</span>
+    </div>
+
+    <p *ngIf="feedback() as fb" [class]="'feedback ' + fb.type">{{ fb.message }}</p>
+  </section>
+
+  <section class="card history">
+    <header>
+      <div>
+        <h2>Upload history</h2>
+        <p>Statuses auto-refresh after each upload.</p>
+      </div>
+      <button type="button" class="ghost" (click)="refreshUploads()" [disabled]="loadingHistory()">
+        Refresh
+      </button>
+    </header>
+
+    <div *ngIf="loadingHistory()" class="loading">Loading uploads...</div>
+
+    <table *ngIf="!loadingHistory() && uploads().length > 0">
+      <thead>
+        <tr>
+          <th>File</th>
+          <th>Status</th>
+          <th>Created</th>
+          <th>Updated</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let upload of uploads(); trackBy: trackByUploadId">
+          <td>{{ upload.filename }}</td>
+          <td>
+            <span [class]="statusClass(upload.status)">{{ statusLabel(upload.status) }}</span>
+          </td>
+          <td>{{ upload.createdAt | date: 'short' }}</td>
+          <td>{{ upload.updatedAt | date: 'short' }}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p *ngIf="!loadingHistory() && uploads().length === 0" class="empty-state">
+      You have not uploaded any files yet.
+    </p>
+  </section>
+</div>

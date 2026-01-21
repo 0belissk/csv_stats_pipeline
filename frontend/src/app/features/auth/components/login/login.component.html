@@ -1,0 +1,37 @@
+<div class="login-shell">
+  <section class="login-card">
+    <div>
+      <p class="eyebrow">CSV Stats Pipeline</p>
+      <h1>Sign in</h1>
+      <p class="subhead">Use your account to reach the dashboard and upload CSV files.</p>
+    </div>
+
+    <form (ngSubmit)="onSubmit()" #loginForm="ngForm">
+      <label for="email">Email</label>
+      <input
+        id="email"
+        name="email"
+        type="email"
+        required
+        placeholder="you@example.com"
+        [(ngModel)]="email"
+      />
+
+      <label for="password">Password</label>
+      <input
+        id="password"
+        name="password"
+        type="password"
+        required
+        placeholder="••••••••"
+        [(ngModel)]="password"
+      />
+
+      <button type="submit" [disabled]="loginForm.invalid || isSubmitting">
+        {{ isSubmitting ? 'Signing in...' : 'Sign in' }}
+      </button>
+    </form>
+
+    <p class="error" *ngIf="errorMessage">{{ errorMessage }}</p>
+  </section>
+</div>
