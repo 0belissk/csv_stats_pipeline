@@ -61,3 +61,24 @@ User uploads CSV → Backend stores in S3 → S3 triggers Lambda
 - Lambda reads `DB_URL`, `DB_USERNAME`, and `DB_PASSWORD` from environment variables and updates `csv_uploads.status` directly (`VALIDATING` → `VALIDATED` / `VALIDATION_FAILED`).
 - S3 notifications are filtered to the `uploads/` prefix (and `.csv` suffix) to avoid noisy invocations.
 - Terraform stack (in `terraform/`) provisions the S3 bucket, IAM role/policy, CloudWatch log group, Lambda function, and S3→Lambda wiring; Terraform consumes a pre-built JAR artifact and never compiles code.
+
+### Local E2E Setup Checklist (Sprint 3)
+1. **LocalStack** – start it with S3, Lambda, Step Functions, and CloudWatch Logs enabled.
+2. **Build Lambda jar** – `cd backend && ./mvnw clean package -DskipTests`.
+3. **Update lambdas** – for each of `csv-orchestrator`, `csv-validation`, and `csv-status`:
+   ```bash
+   aws --endpoint-url=http://localhost:4566 --region us-east-1 lambda update-function-code \
+     --function-name <name> \
+     --zip-file fileb://backend/target/backend-0.0.1-SNAPSHOT-lambda.jar
+   aws --endpoint-url=http://localhost:4566 --region us-east-1 lambda update-function-configuration \
+     --function-name <name> \
+     --environment file://lambda-env.json
+   ```
+   (`lambda-env.json` carries DB creds plus `STATE_MACHINE_ARN`, `SFN_ENDPOINT`, `S3_ENDPOINT`, region, `AWS_ACCESS_KEY_ID/SECRET`.)
+4. **Apply state machine** – `aws --endpoint-url=http://localhost:4566 --region us-east-1 stepfunctions update-state-machine --state-machine-arn arn:aws:states:us-east-1:000000000000:stateMachine:csv-processing --definition file://csv_processing.asl.json`.
+5. **Verify S3 notification** – run `aws ... s3api get-bucket-notification-configuration --bucket csvpipeline-dev-uploads` and confirm the prefix/suffix filter targets the orchestrator.
+6. **Run services** – start Spring Boot (`SPRING_PROFILES_ACTIVE=dev` with Postgres env vars) and the frontend (`pnpm dev`). Uploading a CSV now exercises the full event-driven path locally.
+7. **Manual test payload (optional)** – to trigger the orchestrator without re-uploading, use `test-data/orchestrator-event.json` and `aws ... lambda invoke --cli-binary-format raw-in-base64-out ...` as documented in sprint-03 notes.
+8. **Observe** – tail logs via `aws logs tail /aws/lambda/<function>` and inspect executions with `aws stepfunctions list-executions`. Use `psql` to confirm status transitions in `csv_uploads`.
+
+These steps give anyone a reproducible, purely local way to validate the event-driven architecture described in this ADR.

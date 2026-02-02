@@ -212,5 +212,66 @@ Sprint 3 is successful when:
 6. The system correctly distinguishes valid vs. invalid CSVs
 
 
+---
+
+## LocalStack End-to-End Setup (Sprint 3)
+
+To prove the pipeline end-to-end without touching AWS, we wired everything into LocalStack. These are the exact steps we followed so future devs can reproduce the sprint-3 run:
+
+1. **Build the Lambda artifact** – from `backend/`, run `./mvnw clean package -DskipTests`. This emits `target/backend-0.0.1-SNAPSHOT-lambda.jar` used for all three Lambda functions.
+
+2. **Deploy/update the Lambdas in LocalStack** – for each function (`csv-validation`, `csv-orchestrator`, `csv-status`):
+   ```bash
+   aws --endpoint-url=http://localhost:4566 --region us-east-1 lambda update-function-code \
+     --function-name <name> \
+     --zip-file fileb://backend/target/backend-0.0.1-SNAPSHOT-lambda.jar
+   ```
+   Then push the LocalStack-friendly environment variables (DB URL/creds, `STATE_MACHINE_ARN`, `SFN_ENDPOINT`, `S3_ENDPOINT`, region, test credentials) using `lambda update-function-configuration --environment file://lambda-env.json`.
+
+3. **Step Functions definition** – edit `csv_processing.asl.json` if needed, then apply it:
+   ```bash
+   aws --endpoint-url=http://localhost:4566 --region us-east-1 stepfunctions update-state-machine \
+     --state-machine-arn arn:aws:states:us-east-1:000000000000:stateMachine:csv-processing \
+     --definition file:///Users/<user>/csv_stats_pipeline/csv_processing.asl.json
+   ```
+
+4. **S3 notification wiring** – ensure the bucket `csvpipeline-dev-uploads` has the notification shown below (created via Terraform or the CLI):
+   ```json
+   {
+     "LambdaFunctionConfigurations": [
+       {
+         "Id": "csv-orchestrator-trigger",
+         "LambdaFunctionArn": "arn:aws:lambda:us-east-1:000000000000:function:csv-orchestrator",
+         "Events": ["s3:ObjectCreated:*"],
+         "Filter": {
+           "Key": {
+             "FilterRules": [
+               { "Name": "Prefix", "Value": "uploads/" },
+               { "Name": "Suffix", "Value": ".csv" }
+             ]
+           }
+         }
+       }
+     ]
+   }
+   ```
+
+5. **Backend & frontend** – run `./mvnw spring-boot:run` (backend, profile `dev` with `DB_URL` env vars) and `pnpm dev` (frontend). Uploading a CSV through the UI now writes to LocalStack S3, fires the notification, and kicks off the Step Functions execution.
+
+6. **Manual trigger (if S3 event needs debugging)** – craft `test-data/orchestrator-event.json` with a full S3 notification payload, then run:
+   ```bash
+   aws --endpoint-url=http://localhost:4566 --region us-east-1 lambda invoke \
+     --cli-binary-format raw-in-base64-out \
+     --function-name csv-orchestrator \
+     --payload file://test-data/orchestrator-event.json \
+     /tmp/orchestrator-response.json
+   ```
+   This reproduces the S3 trigger to verify Step Functions wiring without re-uploading.
+
+7. **Observability** – tail logs via `aws --endpoint-url=http://localhost:4566 logs tail /aws/lambda/<function> --follow` and inspect Step Functions runs with `aws stepfunctions list-executions ...`. Use `psql` to confirm status transitions in `csv_uploads`.
+
+Documenting these commands ensures anyone can re-run the sprint-3 E2E test locally.
+
+
 
 ---

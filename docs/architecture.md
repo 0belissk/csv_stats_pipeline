@@ -87,6 +87,15 @@ User uploads CSV
 - Failure path routes either validation issues (`MarkValidationFailed`) or unexpected exceptions (`MarkSystemFailure`) to `UploadStatusLambda`, ensuring descriptive errors reach the `csv_uploads.error_message` column.
 - CloudWatch log group `/aws/states/${project}-csv-processing` captures execution traces so every step transition is auditable.
 
+### Local S3 → Lambda Orchestration Flow
+1. **Upload** – the Angular/React UI posts the file to the Spring backend, which writes it into the `csvpipeline-dev-uploads` bucket using the key `uploads/{userEmail}/{uploadId}/{filename}` via the LocalStack S3 client.
+2. **Notification** – the bucket’s notification (`ObjectCreated:*`, prefix `uploads/`, suffix `.csv`) routes the event to `csv-orchestrator`. LocalStack’s Lambda service accepts the payload and spins up the Java runtime.
+3. **Orchestrator** – `StepFunctionOrchestratorLambda` decodes the key, marks the upload `VALIDATING` in Postgres, and calls `startExecution` on `arn:aws:states:us-east-1:000000000000:stateMachine:csv-processing` with `{uploadId, bucket, key}`.
+4. **State Machine** – `ValidateCsv` invokes `CsvValidationLambda`, `ValidationDecision` branches on `$.validation.valid`, `PersistPlaceholder` keeps the payload intact (`ResultPath: null`), and the status lambdas (`MarkValidated`, `MarkValidationFailed`, `MarkSystemFailure`) call `csv-status` to write the final status.
+5. **Status propagation** – `csv-status` updates the `csv_uploads` row, and the frontend sees the transition through the REST API.
+
+LocalStack emulates S3, Lambda, Step Functions, and CloudWatch Logs, so this entire flow can be verified without AWS access.
+
 ### API Endpoints (Sprint 3)
 | Method | Endpoint | Description |
 |--------|----------|-------------|
