@@ -10,7 +10,7 @@ import java.util.UUID;
 @Table(
         name = "csv_uploads",
         indexes = {
-                @Index(name = "idx_csv_uploads_user_email_created_at", columnList = "userEmail,createdAt DESC")
+                @Index(name = "idx_csv_uploads_user_email_created_at", columnList = "user_email,created_at DESC")
         }
 )
 public class CsvUpload {
@@ -19,7 +19,7 @@ public class CsvUpload {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(name = "user_email", nullable = false)
     private String userEmail;
 
     @Column(nullable = false)
@@ -29,22 +29,22 @@ public class CsvUpload {
     @Column(nullable = false, length = 50)
     private CsvUploadStatus status = CsvUploadStatus.PENDING;
 
-    @Column(nullable = false, length = 512)
+    @Column(name = "s3_key", nullable = false, length = 512)
     private String s3Key;
 
-    @Column(nullable = false)
+    @Column(name = "size_bytes", nullable = false)
     private long sizeBytes;
 
-    @Column(nullable = false)
+    @Column(name = "content_type", nullable = false)
     private String contentType;
 
-    @Column
+    @Column(name = "error_message")
     private String errorMessage;
 
-    @Column(nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
-    @Column(nullable = false)
+    @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
     protected CsvUpload() {

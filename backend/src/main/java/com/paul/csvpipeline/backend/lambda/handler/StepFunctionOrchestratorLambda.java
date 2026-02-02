@@ -10,10 +10,15 @@ import com.paul.csvpipeline.backend.lambda.parser.S3KeyParser;
 import com.paul.csvpipeline.backend.lambda.persistence.UploadStatusRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.sfn.SfnClient;
+import software.amazon.awssdk.services.sfn.SfnClientBuilder;
 import software.amazon.awssdk.services.sfn.model.SfnException;
 import software.amazon.awssdk.services.sfn.model.StartExecutionRequest;
 
+import java.net.URI;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -31,7 +36,7 @@ public class StepFunctionOrchestratorLambda implements RequestHandler<S3Event, V
 
     public StepFunctionOrchestratorLambda() {
         this(
-                SfnClient.builder().build(),
+                buildDefaultSfnClient(),
                 UploadStatusRepository.fromEnv(),
                 requireEnv("STATE_MACHINE_ARN"),
                 new ObjectMapper()
@@ -63,7 +68,7 @@ public class StepFunctionOrchestratorLambda implements RequestHandler<S3Event, V
 
     private void startExecution(S3EventNotification.S3EventNotificationRecord record) {
         String bucket = record.getS3().getBucket().getName();
-        String key = record.getS3().getObject().getKey();
+        String key = record.getS3().getObject().getUrlDecodedKey();
 
         S3KeyParser.ParsedKey parsedKey = S3KeyParser.parse(key);
         log.info("Launching state machine for uploadId={} (bucket={}, key={})",
@@ -101,10 +106,38 @@ public class StepFunctionOrchestratorLambda implements RequestHandler<S3Event, V
 
     private static String requireEnv(String key) {
         String value = System.getenv(key);
-        if (value == null || value.isBlank()) {
+        if (isBlank(value)) {
             throw new IllegalStateException("Missing required environment variable: " + key);
         }
         return value;
+    }
+
+    private static SfnClient buildDefaultSfnClient() {
+        SfnClientBuilder builder = SfnClient.builder();
+
+        String region = System.getenv("AWS_REGION");
+        if (!isBlank(region)) {
+            builder = builder.region(Region.of(region));
+        }
+
+        String endpoint = System.getenv("SFN_ENDPOINT");
+        if (!isBlank(endpoint)) {
+            builder = builder.endpointOverride(URI.create(endpoint));
+        }
+
+        String accessKey = System.getenv("AWS_ACCESS_KEY_ID");
+        String secretKey = System.getenv("AWS_SECRET_ACCESS_KEY");
+        if (!isBlank(accessKey) && !isBlank(secretKey)) {
+            builder = builder.credentialsProvider(
+                    StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKey, secretKey))
+            );
+        }
+
+        return builder.build();
+    }
+
+    private static boolean isBlank(String value) {
+        return value == null || value.isBlank();
     }
 
     public record StateMachineInput(long uploadId, String bucket, String key) {}

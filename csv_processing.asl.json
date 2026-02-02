@@ -1,0 +1,115 @@
+{
+  "Comment": "CSV processing pipeline: validate → persist placeholder",
+  "StartAt": "ValidateCsv",
+  "States": {
+    "ValidateCsv": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "arn:aws:lambda:us-east-1:000000000000:function:csv-validation",
+        "Payload": {
+          "uploadId.$": "$.uploadId",
+          "bucket.$": "$.bucket",
+          "key.$": "$.key"
+        }
+      },
+      "ResultSelector": {
+        "uploadId.$": "$.Payload.uploadId",
+        "valid.$": "$.Payload.valid",
+        "errorCount.$": "$.Payload.errorCount",
+        "errors.$": "$.Payload.errors"
+      },
+      "ResultPath": "$.validation",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "States.TaskFailed"
+          ],
+          "IntervalSeconds": 2,
+          "BackoffRate": 2.0,
+          "MaxAttempts": 3
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": ["States.ALL"],
+          "ResultPath": "$.unhandledError",
+          "Next": "MarkSystemFailure"
+        }
+      ],
+      "Next": "ValidationDecision"
+    },
+    "ValidationDecision": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.validation.valid",
+          "BooleanEquals": true,
+          "Next": "PersistPlaceholder"
+        }
+      ],
+      "Default": "MarkValidationFailed"
+    },
+    "PersistPlaceholder": {
+      "Type": "Pass",
+      "Result": {
+        "message": "Transform/persist stage delivered in Sprint 4"
+      },
+      "ResultPath": null,
+      "Next": "MarkValidated"
+    },
+    "MarkValidated": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "arn:aws:lambda:us-east-1:000000000000:function:csv-status",
+        "Payload": {
+          "uploadId.$": "$.uploadId",
+          "status": "VALIDATED"
+        }
+      },
+      "Next": "Success"
+    },
+    "MarkValidationFailed": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "arn:aws:lambda:us-east-1:000000000000:function:csv-status",
+        "Payload": {
+          "uploadId.$": "$.uploadId",
+          "status": "VALIDATION_FAILED",
+          "errors.$": "$.validation.errors"
+        }
+      },
+      "Next": "Failed"
+    },
+    "MarkSystemFailure": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "arn:aws:lambda:us-east-1:000000000000:function:csv-status",
+        "Payload": {
+          "uploadId.$": "$.uploadId",
+          "status": "VALIDATION_FAILED",
+          "errors": [
+            {
+              "rowNumber": 0,
+              "column": "file",
+              "message.$": "$.unhandledError.Cause"
+            }
+          ]
+        }
+      },
+      "Next": "Failed"
+    },
+    "Success": {
+      "Type": "Succeed"
+    },
+    "Failed": {
+      "Type": "Fail",
+      "Cause": "CSV validation failed"
+    }
+  }
+}

@@ -8,8 +8,14 @@ import com.paul.csvpipeline.backend.lambda.validation.ExpectedSchema;
 import com.paul.csvpipeline.backend.lambda.validation.ValidationError;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.core.ResponseInputStream;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.S3ClientBuilder;
+import software.amazon.awssdk.services.s3.S3Configuration;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 
@@ -27,7 +33,7 @@ public class CsvValidationLambda implements RequestHandler<CsvValidationLambda.V
     private final CsvValidator validator;
 
     public CsvValidationLambda() {
-        this(S3Client.builder().build(), new CsvValidator(ExpectedSchema.defaultSchema()));
+        this(buildDefaultS3Client(), new CsvValidator(ExpectedSchema.defaultSchema()));
     }
 
     public CsvValidationLambda(S3Client s3Client,
@@ -81,5 +87,39 @@ public class CsvValidationLambda implements RequestHandler<CsvValidationLambda.V
 
     /** Response returned to the state machine for branching and logging. */
     public record ValidationResponse(long uploadId, boolean valid, int errorCount, List<ValidationError> errors) {
+    }
+
+    private static S3Client buildDefaultS3Client() {
+        S3ClientBuilder builder = S3Client.builder();
+
+        String region = System.getenv("AWS_REGION");
+        if (!isBlank(region)) {
+            builder = builder.region(Region.of(region));
+        }
+
+        String endpoint = System.getenv("S3_ENDPOINT");
+        if (!isBlank(endpoint)) {
+            builder = builder.endpointOverride(java.net.URI.create(endpoint));
+        }
+
+        builder = builder
+                .serviceConfiguration(S3Configuration.builder()
+                        .pathStyleAccessEnabled(true)
+                        .build())
+                .httpClientBuilder(UrlConnectionHttpClient.builder());
+
+        String accessKey = System.getenv("AWS_ACCESS_KEY_ID");
+        String secretKey = System.getenv("AWS_SECRET_ACCESS_KEY");
+        if (!isBlank(accessKey) && !isBlank(secretKey)) {
+            builder = builder.credentialsProvider(
+                    StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKey, secretKey))
+            );
+        }
+
+        return builder.build();
+    }
+
+    private static boolean isBlank(String value) {
+        return value == null || value.isBlank();
     }
 }

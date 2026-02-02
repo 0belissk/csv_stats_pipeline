@@ -195,6 +195,28 @@
 				<version>3.4.0</version>
 			</plugin>
 
+			<!-- Build a flat shaded jar for AWS Lambda -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-shade-plugin</artifactId>
+				<version>3.5.3</version>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>shade</goal>
+						</goals>
+						<configuration>
+							<finalName>${project.build.finalName}</finalName>
+							<outputFile>${project.build.directory}/${project.build.finalName}-lambda.jar</outputFile>
+							<shadedArtifactAttached>true</shadedArtifactAttached>
+							<shadedClassifierName>lambda</shadedClassifierName>
+							<createDependencyReducedPom>false</createDependencyReducedPom>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
